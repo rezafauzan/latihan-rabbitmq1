@@ -8,15 +8,8 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer conn.Close()
-
-	ch, err := conn.Channel()
+func ProduceMessage(connection *amqp.Connection){
+	ch, err := connection.Channel()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,4 +45,13 @@ func main() {
 	}
 
 	fmt.Println("Sip Bro!")
+}
+
+func main() {
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer conn.Close()
 }
