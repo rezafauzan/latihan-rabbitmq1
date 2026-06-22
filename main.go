@@ -28,7 +28,7 @@ func ProduceMessage(connection *amqp.Connection){
 		log.Fatal(err)
 	}
 
-	ch.PublishWithContext(
+	err = ch.PublishWithContext(
 		context.Background(),
 		"",
 		q.Name,
