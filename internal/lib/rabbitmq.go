@@ -18,7 +18,6 @@ func NewRabbit() (RabbitMQ, error) {
 		log.Fatal(err)
 		return RabbitMQ{}, err
 	}
-	defer conn.Close()
 
 	return RabbitMQ{
 		conn,
