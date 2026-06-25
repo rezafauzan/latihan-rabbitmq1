@@ -11,19 +11,14 @@ func main() {
 		log.Fatal("Rabbit Fail To Establish")
 	}
 
-	err = lib.ProduceMessage(rabbit.RMQ, "dev.test", "ini itu pokoknya kirim")
+	err = lib.ProduceMessage(rabbit.RMQ, "dev.test", "ini itu")
 	if err != nil {
 		log.Fatal("Rabbit Fail To Produce Message", err)
 	}
 
-	err = lib.ConsumeMessage(rabbit.RMQ, "dev.test", "test.consumer")
-	if err != nil {
-		log.Fatal("Rabbit Fail To Consume Message", err)
-	}
-
-	err = lib.ProduceMessage(rabbit.RMQ, "dev.test", "ini itu pokoknya kirim")
+	err = lib.ProduceMessage(rabbit.RMQ, "dev.test", "ini itu")
 	if err != nil {
 		log.Fatal("Rabbit Fail To Produce Message", err)
 	}
-
+	log.Printf("OK")
 }
