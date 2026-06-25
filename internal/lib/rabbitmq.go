@@ -8,7 +8,7 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 )
 
-type RabbitMQ struct{
+type RabbitMQ struct {
 	RMQ *amqp091.Connection
 }
 
@@ -50,14 +50,16 @@ func ConsumeMessage(connection *amqp091.Connection, queueName string, consumerNa
 		return err
 	}
 
-	msgs, err := channel.Consume(queueName, consumerName, false, false, false, false, nil)
+	msgs, err := channel.Consume(fmt.Sprintf("Queue %s", queueName), consumerName, false, false, false, false, nil)
 	if err != nil {
 		return err
 	}
-	
-	for msg := range msgs{
-		fmt.Println(string(msg.Body))
 
+	index := 0
+
+	for msg := range msgs {
+		log.Printf("%s", fmt.Sprintf("Messages #%d : %s", index, string(msg.Body)))
+		index++
 		msg.Ack(true)
 	}
 	return nil
