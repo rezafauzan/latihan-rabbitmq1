@@ -44,3 +44,22 @@ func ProduceMessage(connection *amqp091.Connection, queueName string, messages s
 
 	return nil
 }
+
+func ConsumeMessage(connection *amqp091.Connection, queueName string, consumerName string) error {
+	channel, err := connection.Channel()
+	if err != nil {
+		return err
+	}
+
+	msgs, err := channel.Consume(queueName, consumerName, false, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+	
+	for msg := range msgs{
+		fmt.Println(string(msg.Body))
+
+		msg.Ack(true)
+	}
+	return nil
+}
