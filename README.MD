@@ -68,7 +68,7 @@ Exchange
 ## Routing Key
 `Routing Key` adalah label/alamat tujuan pesan yang digunakan oleh Exchange untuk menentukan ke queue mana pesan harus dikirim.
 
-### Membuat Pesan
+## Membuat Pesan
 untuk memproduce pesan di golang pertama tambahkan dependency RabbitMQ dengan perintah
 
 `go get github.com/rabbitmq/amqp091-go`
@@ -112,3 +112,77 @@ amqp.Publishing{
 ```
 
 function `PublishWithContext()` ini mengembalikan error yang bisa ditangkap
+
+## Consume Message
+
+setelah message berhasil dipublish ke dalam queue, message tersebut sudah dapat diterima oleh consumer. sama seperti saat melakukan publish, langkah pertama adalah membuat `channel` dari `connection` yang sudah ada menggunakan function `connection.Channel()`.
+
+setelah mendapatkan `channel`, kita dapat mulai mendengarkan queue menggunakan function `Consume()` yang menerima 7 parameter yaitu :
+
+- `queue string`  
+  nama queue yang akan didengarkan.
+
+- `consumer string`  
+  nama atau identitas consumer. nilai ini digunakan RabbitMQ untuk mengidentifikasi consumer yang sedang terkoneksi. jika diisi string kosong (`""`) maka RabbitMQ akan membuat nama consumer secara otomatis.
+
+- `autoAck bool`  
+  jika diisi `true` maka RabbitMQ akan langsung menganggap message berhasil diproses setelah dikirim ke consumer. jika diisi `false` maka consumer harus memanggil `Ack()` secara manual setelah proses selesai.
+
+- `exclusive bool`  
+  jika diisi `true` maka hanya consumer tersebut yang dapat mengonsumsi message dari queue tersebut selama koneksi masih aktif.
+
+- `noLocal bool`  
+  fitur ini sudah tidak digunakan oleh RabbitMQ sehingga biasanya selalu diisi `false`.
+
+- `noWait bool`  
+  jika diisi `false` maka client akan menunggu konfirmasi dari RabbitMQ bahwa consumer berhasil dibuat.
+
+- `args amqp.Table`  
+  berisi konfigurasi tambahan untuk consumer. pada penggunaan dasar biasanya diisi `nil`.
+
+function `Consume()` akan mengembalikan dua nilai yaitu :
+
+- `<-chan amqp.Delivery`  
+  channel Go yang berisi setiap message yang diterima dari RabbitMQ.
+
+- `error`  
+  berisi error apabila proses pembuatan consumer gagal.
+
+karena nilai yang dikembalikan berupa **channel**, maka consumer cukup melakukan perulangan menggunakan `for range` untuk menerima setiap message yang masuk.
+
+```go
+for msg := range msgs {
+    log.Printf("%s", string(msg.Body))
+}
+```
+
+setiap kali ada message baru di queue, RabbitMQ akan mengirimkan object `amqp.Delivery` melalui channel tersebut. object ini berisi seluruh informasi mengenai message seperti isi pesan (`Body`), header, routing key, exchange, delivery tag, dan informasi lainnya.
+
+karena pada contoh berikut parameter `autoAck` diisi `false`
+
+```go
+msgs, err := channel.Consume(
+    queueName,
+    consumerName,
+    false, // autoAck
+    false,
+    false,
+    false,
+    nil,
+)
+```
+
+maka setelah message selesai diproses consumer wajib mengirimkan konfirmasi ke RabbitMQ menggunakan function `Ack()`.
+
+```go
+msg.Ack(true)
+```
+
+function `Ack()` menerima 1 parameter yaitu :
+
+- `multiple bool`  
+  jika diisi `false` maka hanya message tersebut yang akan di-acknowledge. jika diisi `true` maka RabbitMQ akan menganggap seluruh message dengan `DeliveryTag` yang lebih kecil atau sama telah berhasil diproses. pada kebanyakan kasus consumer memproses satu message dalam satu waktu sehingga parameter ini biasanya diisi `false`.
+
+setelah RabbitMQ menerima `Ack()`, message akan dihapus dari queue sehingga tidak akan dikirim kembali.
+
+apabila consumer berhenti atau mengalami error sebelum memanggil `Ack()`, RabbitMQ akan menganggap message tersebut belum selesai diproses dan akan mengirimkannya kembali ke consumer lain yang tersedia. mekanisme ini membuat RabbitMQ mampu menjaga agar message tidak hilang ketika terjadi kegagalan pada consumer.
